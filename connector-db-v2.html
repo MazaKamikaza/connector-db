@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connector Database</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #141720;
+    --surface2: #1c2030;
+    --border: #2a2f42;
+    --accent: #e8c84a;
+    --accent2: #4a9de8;
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --success: #4ade80;
+    --danger: #f87171;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+  .logo span { color: var(--text-muted); }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    background: none; border: 1px solid transparent; color: var(--text-muted);
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    padding: 7px 18px; cursor: pointer; border-radius: 4px; transition: all 0.2s; text-transform: uppercase;
+  }
+  .nav-tab:hover { color: var(--text); border-color: var(--border); }
+  .nav-tab.active { background: var(--accent); color: #0d0f14; border-color: var(--accent); font-weight: 600; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* LOADING OVERLAY */
+  .loading-overlay {
+    position: fixed; inset: 0; background: rgba(13,15,20,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; display: none;
+  }
+  .loading-overlay.show { display: flex; }
+  .loading-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 32px 48px; text-align: center;
+    font-family: var(--mono); font-size: 13px; color: var(--text-muted);
+  }
+  .spinner {
+    width: 32px; height: 32px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* LOGIN MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: none; align-items: center; justify-content: center; z-index: 300;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 40px; width: 360px;
+  }
+  .modal-box h2 { font-family: var(--mono); font-size: 16px; color: var(--accent); margin-bottom: 8px; }
+  .modal-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+  .modal-error { color: var(--danger); font-size: 12px; font-family: var(--mono); margin-top: 10px; display: none; }
+
+  /* SEARCH */
+  .search-hero { text-align: center; margin-bottom: 48px; }
+  .search-hero h1 { font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--accent); letter-spacing: 0.06em; margin-bottom: 8px; }
+  .search-hero p { color: var(--text-muted); font-size: 14px; letter-spacing: 0.04em; }
+  .search-form {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 32px; display: grid; grid-template-columns: 1fr 1fr auto;
+    gap: 16px; align-items: end; margin-bottom: 40px;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 8px; }
+  label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; }
+  input, select, textarea {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    font-family: var(--mono); font-size: 14px; padding: 12px 16px;
+    border-radius: 6px; outline: none; transition: border-color 0.2s; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--text-muted); }
+  select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .btn-search {
+    background: var(--accent); color: #0d0f14; border: none;
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    letter-spacing: 0.1em; padding: 12px 28px; border-radius: 6px;
+    cursor: pointer; text-transform: uppercase; transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-search:hover { background: #f5d96a; transform: translateY(-1px); }
+
+  /* RESULTS */
+  #results { display: none; }
+  .result-header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .result-tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; background: rgba(232,200,74,0.15); color: var(--accent); border: 1px solid rgba(232,200,74,0.3); }
+  .result-title { font-family: var(--mono); font-size: 20px; color: var(--text); font-weight: 600; }
+  .section { margin-bottom: 36px; }
+  .section-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .images-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+  .connector-img { width: 160px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; background: var(--surface2); }
+  .connector-img:hover { border-color: var(--accent); transform: scale(1.03); }
+  .img-placeholder { width: 160px; height: 120px; border-radius: 6px; border: 1px dashed var(--border); background: var(--surface2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 12px; font-family: var(--mono); }
+
+  .terminals-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; }
+  .terminals-table th { text-align: left; padding: 10px 16px; background: var(--surface2); color: var(--text-muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  .terminals-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .terminals-table tr:last-child td { border-bottom: none; }
+  .terminals-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .pin-badge { display: inline-block; background: rgba(74,157,232,0.15); color: var(--accent2); border: 1px solid rgba(74,157,232,0.3); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; }
+
+  .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .tool-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
+  .tool-card:hover { border-color: var(--accent2); }
+  .tool-img-wrap { width: 100%; height: 130px; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .tool-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .tool-info { padding: 12px 14px; }
+  .tool-number { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--accent2); margin-bottom: 4px; }
+  .tool-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+  .pdf-preview-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .pdf-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .pdf-name { font-family: var(--mono); font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+  .btn-download { background: none; border: 1px solid var(--border); color: var(--text-muted); font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; padding: 6px 14px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; text-decoration: none; display: inline-block; }
+  .btn-download:hover { border-color: var(--text-dim); color: var(--text); }
+  .pdf-frame-container { position: relative; height: 500px; background: #525659; }
+  .pdf-frame-container iframe { width: 100%; height: 100%; border: none; }
+  .pdf-placeholder { height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-muted); font-family: var(--mono); font-size: 13px; }
+
+  .no-result { text-align: center; padding: 60px 20px; color: var(--text-muted); font-family: var(--mono); font-size: 14px; display: none; }
+
+  /* ADMIN */
+  .admin-header { margin-bottom: 32px; }
+  .admin-header h2 { font-family: var(--mono); font-size: 22px; color: var(--accent); margin-bottom: 6px; }
+  .admin-header p { color: var(--text-muted); font-size: 14px; }
+  .admin-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+  .admin-form { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; }
+  .admin-form h3 { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-row.full { grid-template-columns: 1fr; }
+  .sub-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .sub-section-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+  .terminal-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: end; }
+  .tool-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: end; }
+  .btn-add-row { background: none; border: 1px dashed var(--border); color: var(--text-muted); font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 16px; border-radius: 6px; cursor: pointer; width: 100%; transition: all 0.2s; margin-top: 4px; }
+  .btn-add-row:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-remove-row { background: none; border: 1px solid var(--border); color: var(--danger); width: 36px; height: 36px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; font-size: 18px; line-height: 1; }
+  .btn-remove-row:hover { background: rgba(248,113,113,0.1); border-color: var(--danger); }
+  .btn-save { background: var(--success); color: #0d0f14; border: none; font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 0.1em; padding: 13px 32px; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; width: 100%; margin-top: 24px; }
+  .btn-save:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-logout { background: none; border: 1px solid var(--border); color: var(--text-muted); font-family: var(--mono); font-size: 11px; padding: 6px 14px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  .connector-list-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .connector-list-panel h3 { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); padding: 14px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .connector-list { max-height: 600px; overflow-y: auto; }
+  .connector-item { padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: default; transition: background 0.15s; display: flex; justify-content: space-between; align-items: center; }
+  .connector-item:hover { background: var(--surface2); }
+  .connector-item:last-child { border-bottom: none; }
+  .ci-main { font-family: var(--mono); font-size: 13px; color: var(--accent); margin-bottom: 4px; }
+  .ci-sub { font-size: 11px; color: var(--text-muted); }
+  .btn-delete-connector { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 16px; transition: color 0.2s; }
+  .btn-delete-connector:hover { color: var(--danger); }
+  .empty-list { padding: 32px 16px; text-align: center; color: var(--text-muted); font-family: var(--mono); font-size: 12px; }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--success); color: var(--success); font-family: var(--mono); font-size: 13px; padding: 12px 20px; border-radius: 6px; transform: translateY(80px); opacity: 0; transition: all 0.3s; z-index: 1000; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: none; align-items: center; justify-content: center; z-index: 999; cursor: pointer; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 90vw; max-height: 88vh; object-fit: contain; border-radius: 4px; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .search-form { grid-template-columns: 1fr; }
+    .admin-layout { grid-template-columns: 1fr; }
+    .terminal-row { grid-template-columns: 1fr 1fr auto; }
+    header { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    Učitavanje baze...
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal-box">
+    <h2>Admin pristup</h2>
+    <p>Unesite lozinku za upravljanje bazom konektora.</p>
+    <div class="field-group">
+      <label>Lozinka</label>
+      <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <div class="modal-error" id="login-error">Pogrešna lozinka. Pokušajte ponovo.</div>
+    <button class="btn-save" style="margin-top:20px" onclick="doLogin()">Prijavi se</button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">Connector <span>//</span> Database</div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" id="tab-search" onclick="showPage('search', this)">Pretraga</button>
+    <button class="nav-tab" id="tab-admin" onclick="handleAdminTab()">Admin</button>
+  </nav>
+</header>
+
+<main>
+  <!-- SEARCH PAGE -->
+  <div id="page-search" class="page active">
+    <div class="search-hero">
+      <h1>CONNECTOR DB</h1>
+      <p>Pretraga konektora, terminala i alata po broju i projektu</p>
+    </div>
+    <div class="search-form">
+      <div class="field-group">
+        <label>Broj konektora</label>
+        <input type="text" id="input-connector-number" placeholder="npr. MX23-A14" onkeydown="if(event.key==='Enter') doSearch()" />
+      </div>
+      <div class="field-group">
+        <label>Projekat</label>
+        <select id="input-project">
+          <option value="">— Svi projekti —</option>
+        </select>
+      </div>
+      <button class="btn-search" onclick="doSearch()">▶ Search</button>
+    </div>
+    <div id="no-result" class="no-result">
+      <div style="font-size:32px;margin-bottom:8px;opacity:0.3">◎</div>
+      Nema rezultata za traženu kombinaciju.
+    </div>
+    <div id="results">
+      <div class="result-header">
+        <span class="result-tag" id="result-project-tag"></span>
+        <span class="result-title" id="result-connector-title"></span>
+      </div>
+      <div class="section">
+        <div class="section-label">Slike konektora</div>
+        <div class="images-grid" id="result-connector-images"></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Terminali</div>
+        <table class="terminals-table">
+          <thead><tr><th>Oznaka terminala</th><th>Pozicija / Pin</th><th>Boja žice</th></tr></thead>
+          <tbody id="result-terminals"></tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-label">Alati za vađenje terminala</div>
+        <div class="tools-grid" id="result-tools"></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Standard / Instrukcija za alat</div>
+        <div id="result-pdf"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="page-admin" class="page">
+    <div class="admin-header">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h2>Admin panel</h2>
+          <p>Dodajte nove konektore, terminale, alate i PDF standard</p>
+        </div>
+        <button class="btn-logout" onclick="doLogout()">Odjavi se</button>
+      </div>
+    </div>
+    <div class="admin-layout">
+      <div class="admin-form">
+        <h3>Novi konektor</h3>
+        <div class="form-row">
+          <div class="field-group">
+            <label>Broj konektora *</label>
+            <input type="text" id="a-number" placeholder="npr. MX23-A14" />
+          </div>
+          <div class="field-group">
+            <label>Projekat *</label>
+            <input type="text" id="a-project" placeholder="npr. BMW G20" />
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="field-group">
+            <label>Napomena (opciono)</label>
+            <textarea id="a-note" placeholder="Opis, lokacija u vozilu..."></textarea>
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-section-title">Slike konektora (URL adrese)</div>
+          <div id="connector-img-rows">
+            <div class="form-row full" style="margin-bottom:10px">
+              <input type="text" placeholder="https://... (URL slike)" class="conn-img-url" />
+            </div>
+          </div>
+          <button class="btn-add-row" onclick="addConnectorImgRow()">+ Dodaj sliku</button>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-section-title">Terminali</div>
+          <div id="terminal-rows">
+            <div class="terminal-row">
+              <div class="field-group"><label>Oznaka</label><input type="text" placeholder="1-968853-1" class="t-name" /></div>
+              <div class="field-group"><label>Pin</label><input type="text" placeholder="A1" class="t-pin" /></div>
+              <div class="field-group"><label>Boja žice</label><input type="text" placeholder="CRV/BEL" class="t-color" /></div>
+              <button class="btn-remove-row" onclick="removeRow(this)">×</button>
+            </div>
+          </div>
+          <button class="btn-add-row" onclick="addTerminalRow()">+ Dodaj terminal</button>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-section-title">Alati za vađenje terminala</div>
+          <div id="tool-rows">
+            <div class="tool-row">
+              <div class="field-group"><label>Broj alata</label><input type="text" placeholder="2-1579007-1" class="tool-num" /></div>
+              <div class="field-group"><label>Slika alata (URL)</label><input type="text" placeholder="https://..." class="tool-img" /></div>
+              <button class="btn-remove-row" onclick="removeRow(this)" style="margin-top:20px">×</button>
+            </div>
+          </div>
+          <button class="btn-add-row" onclick="addToolRow()">+ Dodaj alat</button>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-section-title">PDF Standard</div>
+          <div class="form-row full" style="margin-bottom:10px">
+            <div class="field-group">
+              <label>URL ka PDF fajlu</label>
+              <input type="text" id="a-pdf-url" placeholder="https://...pdf" />
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="field-group">
+              <label>Naziv dokumenta</label>
+              <input type="text" id="a-pdf-name" placeholder="Standard-001.pdf" />
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-save" onclick="saveConnector()">✓ Sačuvaj konektor</button>
+      </div>
+
+      <div class="connector-list-panel">
+        <h3>Sačuvani konektori (<span id="list-count">0</span>)</h3>
+        <div class="connector-list" id="connector-list"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="">
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== CONFIG =====================
+const BIN_ID   = '69f10889aaba8821974b397c';
+const API_KEY  = '$2a$10$vGksn.m1pXrr6ODqKiVeXuL5j0R3HwonCvVNR8tE0NEy8RHlCxjn.';
+const ADMIN_PW = 'jazakikonektori';
+const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+let DB = [];
+let isAdmin = false;
+
+// ===================== JSONBin API =====================
+async function loadDB() {
+  showLoading(true);
+  try {
+    const res = await fetch(BASE_URL + '/latest', {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    const json = await res.json();
+    DB = json.record.connectors || [];
+    populateProjectDropdown();
+    if (isAdmin) renderConnectorList();
+  } catch(e) {
+    showToast('Greška pri učitavanju baze!', true);
+  }
+  showLoading(false);
+}
+
+async function saveDB() {
+  showLoading(true);
+  try {
+    await fetch(BASE_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': API_KEY
+      },
+      body: JSON.stringify({ connectors: DB })
+    });
+  } catch(e) {
+    showToast('Greška pri čuvanju!', true);
+  }
+  showLoading(false);
+}
+
+// ===================== AUTH =====================
+function handleAdminTab() {
+  if (isAdmin) {
+    showPage('admin', document.getElementById('tab-admin'));
+  } else {
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('login-modal').classList.add('show');
+    setTimeout(() => document.getElementById('login-password').focus(), 100);
+  }
+}
+
+function doLogin() {
+  const pw = document.getElementById('login-password').value;
+  if (pw === ADMIN_PW) {
+    isAdmin = true;
+    document.getElementById('login-modal').classList.remove('show');
+    showPage('admin', document.getElementById('tab-admin'));
+    renderConnectorList();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function doLogout() {
+  isAdmin = false;
+  showPage('search', document.getElementById('tab-search'));
+}
+
+// ===================== NAVIGATION =====================
+function showPage(page, tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (tab) tab.classList.add('active');
+  if (page === 'search') populateProjectDropdown();
+}
+
+// ===================== SEARCH =====================
+function populateProjectDropdown() {
+  const sel = document.getElementById('input-project');
+  const projects = [...new Set(DB.map(c => c.project))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Svi projekti —</option>';
+  projects.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p;
+    if (p === current) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function doSearch() {
+  const num = document.getElementById('input-connector-number').value.trim().toUpperCase();
+  const proj = document.getElementById('input-project').value;
+  if (!num) { showToast('Unesite broj konektora.', true); return; }
+  let results = DB.filter(c => c.number.toUpperCase() === num);
+  if (proj) results = results.filter(c => c.project === proj);
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('no-result').style.display = 'none';
+  if (results.length === 0) { document.getElementById('no-result').style.display = 'block'; return; }
+  renderResults(results[0]);
+}
+
+function renderResults(c) {
+  document.getElementById('result-project-tag').textContent = c.project;
+  document.getElementById('result-connector-title').textContent = c.number;
+
+  // Images
+  const imgGrid = document.getElementById('result-connector-images');
+  imgGrid.innerHTML = '';
+  if (c.connectorImages && c.connectorImages.length > 0) {
+    c.connectorImages.forEach(src => {
+      if (!src) return;
+      const img = document.createElement('img');
+      img.className = 'connector-img';
+      img.src = src; img.alt = c.number;
+      img.onclick = () => openLightbox(src);
+      imgGrid.appendChild(img);
+    });
+  } else {
+    imgGrid.innerHTML = `<div class="img-placeholder"><svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Nema slike</span></div>`;
+  }
+
+  // Terminals
+  const tbody = document.getElementById('result-terminals');
+  tbody.innerHTML = '';
+  if (c.terminals && c.terminals.length > 0) {
+    c.terminals.forEach(t => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${t.name}</td><td><span class="pin-badge">${t.pin}</span></td><td>${t.color || '—'}</td>`;
+      tbody.appendChild(tr);
+    });
+  } else {
+    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:20px">Nema terminala</td></tr>';
+  }
+
+  // Tools
+  const toolsGrid = document.getElementById('result-tools');
+  toolsGrid.innerHTML = '';
+  if (c.tools && c.tools.length > 0) {
+    c.tools.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'tool-card';
+      card.innerHTML = `
+        <div class="tool-img-wrap">
+          ${t.image ? `<img src="${t.image}" alt="${t.number}" onclick="openLightbox('${t.image}')" style="cursor:pointer">` : `<svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="#3a3f52"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>`}
+        </div>
+        <div class="tool-info">
+          <div class="tool-number">${t.number}</div>
+          <div class="tool-desc">Alat za vađenje</div>
+        </div>`;
+      toolsGrid.appendChild(card);
+    });
+  } else {
+    toolsGrid.innerHTML = '<div style="color:var(--text-muted);font-family:var(--mono);font-size:13px">Nema alata</div>';
+  }
+
+  // PDF
+  const pdfDiv = document.getElementById('result-pdf');
+  if (c.pdfUrl) {
+    pdfDiv.innerHTML = `
+      <div class="pdf-preview-wrap">
+        <div class="pdf-toolbar">
+          <div class="pdf-name">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f87171"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            ${c.pdfName || 'Standard.pdf'}
+          </div>
+          <a class="btn-download" href="${c.pdfUrl}" target="_blank">↓ Preuzmi / Otvori</a>
+        </div>
+        <div class="pdf-frame-container">
+          <iframe src="${c.pdfUrl}" title="PDF Preview"></iframe>
+        </div>
+      </div>`;
+  } else {
+    pdfDiv.innerHTML = `<div class="pdf-preview-wrap"><div class="pdf-placeholder"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="opacity:0.2"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Nema PDF standarda</div></div>`;
+  }
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ===================== ADMIN =====================
+function addConnectorImgRow() {
+  const c = document.getElementById('connector-img-rows');
+  const d = document.createElement('div');
+  d.style.cssText = 'display:flex;gap:8px;margin-bottom:10px';
+  d.innerHTML = `<input type="text" placeholder="https://... (URL slike)" class="conn-img-url" style="flex:1"><button class="btn-remove-row" onclick="this.parentElement.remove()">×</button>`;
+  c.appendChild(d);
+}
+
+function addTerminalRow() {
+  const c = document.getElementById('terminal-rows');
+  const d = document.createElement('div');
+  d.className = 'terminal-row';
+  d.innerHTML = `<div class="field-group"><input type="text" placeholder="Oznaka" class="t-name"/></div><div class="field-group"><input type="text" placeholder="Pin" class="t-pin"/></div><div class="field-group"><input type="text" placeholder="Boja" class="t-color"/></div><button class="btn-remove-row" onclick="removeRow(this)">×</button>`;
+  c.appendChild(d);
+}
+
+function addToolRow() {
+  const c = document.getElementById('tool-rows');
+  const d = document.createElement('div');
+  d.className = 'tool-row';
+  d.innerHTML = `<div class="field-group"><label>Broj alata</label><input type="text" placeholder="2-1579007-1" class="tool-num"/></div><div class="field-group"><label>Slika alata (URL)</label><input type="text" placeholder="https://..." class="tool-img"/></div><button class="btn-remove-row" onclick="removeRow(this)" style="margin-top:20px">×</button>`;
+  c.appendChild(d);
+}
+
+function removeRow(btn) { btn.closest('.terminal-row,.tool-row')?.remove(); }
+
+async function saveConnector() {
+  const number = document.getElementById('a-number').value.trim().toUpperCase();
+  const project = document.getElementById('a-project').value.trim();
+  if (!number || !project) { showToast('Broj konektora i projekat su obavezni!', true); return; }
+
+  const connectorImages = [...document.querySelectorAll('.conn-img-url')].map(i => i.value.trim()).filter(Boolean);
+  const terminals = [...document.querySelectorAll('.terminal-row')].map(r => ({
+    name: r.querySelector('.t-name')?.value.trim() || '',
+    pin: r.querySelector('.t-pin')?.value.trim() || '',
+    color: r.querySelector('.t-color')?.value.trim() || ''
+  })).filter(t => t.name);
+  const tools = [...document.querySelectorAll('.tool-row')].map(r => ({
+    number: r.querySelector('.tool-num')?.value.trim() || '',
+    image: r.querySelector('.tool-img')?.value.trim() || ''
+  })).filter(t => t.number);
+
+  DB.push({
+    id: Date.now(), number, project,
+    note: document.getElementById('a-note').value.trim(),
+    connectorImages, terminals, tools,
+    pdfUrl: document.getElementById('a-pdf-url').value.trim(),
+    pdfName: document.getElementById('a-pdf-name').value.trim()
+  });
+
+  await saveDB();
+  populateProjectDropdown();
+  renderConnectorList();
+  resetAdminForm();
+  showToast(`Konektor ${number} (${project}) sačuvan!`);
+}
+
+async function deleteConnector(id) {
+  if (!confirm('Obrisati ovaj konektor?')) return;
+  DB = DB.filter(c => c.id !== id);
+  await saveDB();
+  populateProjectDropdown();
+  renderConnectorList();
+  showToast('Konektor obrisan.');
+}
+
+function renderConnectorList() {
+  const list = document.getElementById('connector-list');
+  document.getElementById('list-count').textContent = DB.length;
+  if (DB.length === 0) { list.innerHTML = '<div class="empty-list">Nema sačuvanih konektora</div>'; return; }
+  list.innerHTML = DB.map(c => `
+    <div class="connector-item">
+      <div>
+        <div class="ci-main">${c.number}</div>
+        <div class="ci-sub">${c.project}${c.note ? ' · ' + c.note.substring(0,40) : ''}</div>
+      </div>
+      <button class="btn-delete-connector" onclick="deleteConnector(${c.id})">✕</button>
+    </div>`).join('');
+}
+
+function resetAdminForm() {
+  ['a-number','a-project','a-note','a-pdf-url','a-pdf-name'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('connector-img-rows').innerHTML = `<div style="margin-bottom:10px"><input type="text" placeholder="https://... (URL slike)" class="conn-img-url" /></div>`;
+  document.getElementById('terminal-rows').innerHTML = `<div class="terminal-row"><div class="field-group"><label>Oznaka</label><input type="text" placeholder="1-968853-1" class="t-name"/></div><div class="field-group"><label>Pin</label><input type="text" placeholder="A1" class="t-pin"/></div><div class="field-group"><label>Boja žice</label><input type="text" placeholder="CRV/BEL" class="t-color"/></div><button class="btn-remove-row" onclick="removeRow(this)">×</button></div>`;
+  document.getElementById('tool-rows').innerHTML = `<div class="tool-row"><div class="field-group"><label>Broj alata</label><input type="text" placeholder="2-1579007-1" class="tool-num"/></div><div class="field-group"><label>Slika alata (URL)</label><input type="text" placeholder="https://..." class="tool-img"/></div><button class="btn-remove-row" onclick="removeRow(this)" style="margin-top:20px">×</button></div>`;
+}
+
+// ===================== UI UTILS =====================
+function showLoading(v) { document.getElementById('loading').classList.toggle('show', v); }
+function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').classList.add('open'); }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = isError ? 'var(--danger)' : 'var(--success)';
+  t.style.color = isError ? 'var(--danger)' : 'var(--success)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===================== INIT =====================
+loadDB();
+</script>
+</body>
+</html>
