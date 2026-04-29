@@ -122,25 +122,31 @@
   .section-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
   .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  .images-grid { display: flex; gap: 12px; flex-wrap: wrap; }
-  .connector-img { width: 160px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; background: var(--surface2); }
-  .connector-img:hover { border-color: var(--accent); transform: scale(1.03); }
-  .img-placeholder { width: 160px; height: 120px; border-radius: 6px; border: 1px dashed var(--border); background: var(--surface2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 12px; font-family: var(--mono); }
+  .images-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .img-card { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .img-card-img-wrap { width: 100%; aspect-ratio: 1/1; overflow: hidden; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; transition: all 0.2s; }
+  .img-card-img-wrap:hover { border-color: var(--accent); transform: scale(1.02); }
+  .img-card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .img-card-name { font-family: var(--mono); font-size: 11px; color: var(--text-muted); text-align: center; word-break: break-all; }
+  .connector-img { width: 100%; height: 220px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; background: var(--surface2); display: block; }
+  .connector-img:hover { border-color: var(--accent); transform: scale(1.02); }
+  .img-placeholder { width: 100%; height: 160px; border-radius: 6px; border: 1px dashed var(--border); background: var(--surface2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 12px; font-family: var(--mono); }
 
-  .terminals-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; }
-  .terminals-table th { text-align: left; padding: 10px 16px; background: var(--surface2); color: var(--text-muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
-  .terminals-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text); }
-  .terminals-table tr:last-child td { border-bottom: none; }
-  .terminals-table tr:hover td { background: rgba(255,255,255,0.02); }
-  .pin-badge { display: inline-block; background: rgba(74,157,232,0.15); color: var(--accent2); border: 1px solid rgba(74,157,232,0.3); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; }
+  .terminals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .terminal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
+  .terminal-card:hover { border-color: var(--accent2); }
+  .terminal-img-wrap { width: 100%; height: 140px; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .terminal-img-wrap img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+  .terminal-card-info { padding: 10px 12px; }
+  .terminal-card-number { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent2); }
 
-  .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .tool-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
   .tool-card:hover { border-color: var(--accent2); }
-  .tool-img-wrap { width: 100%; height: 130px; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  .tool-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
-  .tool-info { padding: 12px 14px; }
-  .tool-number { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--accent2); margin-bottom: 4px; }
+  .tool-img-wrap { width: 100%; height: 140px; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .tool-img-wrap img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+  .tool-info { padding: 10px 12px; }
+  .tool-number { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent2); }
   .tool-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
 
   .pdf-preview-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
@@ -165,7 +171,7 @@
   .form-row.full { grid-template-columns: 1fr; }
   .sub-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
   .sub-section-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
-  .terminal-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: end; }
+  .terminal-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: end; }
   .tool-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: end; }
   .btn-add-row { background: none; border: 1px dashed var(--border); color: var(--text-muted); font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 16px; border-radius: 6px; cursor: pointer; width: 100%; transition: all 0.2s; margin-top: 4px; }
   .btn-add-row:hover { border-color: var(--accent); color: var(--accent); }
@@ -274,10 +280,7 @@
       </div>
       <div class="section">
         <div class="section-label">Terminali</div>
-        <table class="terminals-table">
-          <thead><tr><th>Oznaka terminala</th><th>Pozicija / Pin</th><th>Boja žice</th></tr></thead>
-          <tbody id="result-terminals"></tbody>
-        </table>
+        <div class="terminals-grid" id="result-terminals"></div>
       </div>
       <div class="section">
         <div class="section-label">Alati za vađenje terminala</div>
@@ -335,9 +338,8 @@
           <div class="sub-section-title">Terminali</div>
           <div id="terminal-rows">
             <div class="terminal-row">
-              <div class="field-group"><label>Oznaka</label><input type="text" placeholder="1-968853-1" class="t-name" /></div>
-              <div class="field-group"><label>Pin</label><input type="text" placeholder="A1" class="t-pin" /></div>
-              <div class="field-group"><label>Boja žice</label><input type="text" placeholder="CRV/BEL" class="t-color" /></div>
+              <div class="field-group"><label>Broj terminala</label><input type="text" placeholder="1-968853-1" class="t-name"/></div>
+              <div class="field-group"><label>Slika terminala (URL)</label><input type="text" placeholder="https://..." class="t-img"/></div>
               <button class="btn-remove-row" onclick="removeRow(this)">×</button>
             </div>
           </div>
@@ -506,27 +508,34 @@ function renderResults(c) {
   if (c.connectorImages && c.connectorImages.length > 0) {
     c.connectorImages.forEach(src => {
       if (!src) return;
-      const img = document.createElement('img');
-      img.className = 'connector-img';
-      img.src = src; img.alt = c.number;
-      img.onclick = () => openLightbox(src);
-      imgGrid.appendChild(img);
+      const name = src.split('/').pop();
+      const card = document.createElement('div');
+      card.className = 'img-card';
+      card.innerHTML = `<div class="img-card-img-wrap" onclick="openLightbox('${src}')"><img src="${src}" alt="${name}"></div><div class="img-card-name">${name}</div>`;
+      imgGrid.appendChild(card);
     });
   } else {
     imgGrid.innerHTML = `<div class="img-placeholder"><svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Nema slike</span></div>`;
   }
 
   // Terminals
-  const tbody = document.getElementById('result-terminals');
-  tbody.innerHTML = '';
+  const termGrid = document.getElementById('result-terminals');
+  termGrid.innerHTML = '';
   if (c.terminals && c.terminals.length > 0) {
     c.terminals.forEach(t => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${t.name}</td><td><span class="pin-badge">${t.pin}</span></td><td>${t.color || '—'}</td>`;
-      tbody.appendChild(tr);
+      const card = document.createElement('div');
+      card.className = 'terminal-card';
+      card.innerHTML = `
+        <div class="terminal-img-wrap">
+          ${t.image ? `<img src="${t.image}" alt="${t.name}" onclick="openLightbox('${t.image}')">` : `<svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#3a3f52"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`}
+        </div>
+        <div class="terminal-card-info">
+          <div class="terminal-card-number">${t.name}</div>
+        </div>`;
+      termGrid.appendChild(card);
     });
   } else {
-    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:20px">Nema terminala</td></tr>';
+    termGrid.innerHTML = '<div style="color:var(--text-muted);font-family:var(--mono);font-size:13px">Nema terminala</div>';
   }
 
   // Tools
@@ -538,11 +547,10 @@ function renderResults(c) {
       card.className = 'tool-card';
       card.innerHTML = `
         <div class="tool-img-wrap">
-          ${t.image ? `<img src="${t.image}" alt="${t.number}" onclick="openLightbox('${t.image}')" style="cursor:pointer">` : `<svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="#3a3f52"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>`}
+          ${t.image ? `<img src="${t.image}" alt="${t.number}" onclick="openLightbox('${t.image}')">` : `<svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#3a3f52"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>`}
         </div>
         <div class="tool-info">
           <div class="tool-number">${t.number}</div>
-          <div class="tool-desc">Alat za vađenje</div>
         </div>`;
       toolsGrid.appendChild(card);
     });
@@ -587,7 +595,7 @@ function addTerminalRow() {
   const c = document.getElementById('terminal-rows');
   const d = document.createElement('div');
   d.className = 'terminal-row';
-  d.innerHTML = `<div class="field-group"><input type="text" placeholder="Oznaka" class="t-name"/></div><div class="field-group"><input type="text" placeholder="Pin" class="t-pin"/></div><div class="field-group"><input type="text" placeholder="Boja" class="t-color"/></div><button class="btn-remove-row" onclick="removeRow(this)">×</button>`;
+  d.innerHTML = `<div class="field-group"><label>Broj terminala</label><input type="text" placeholder="1-968853-1" class="t-name"/></div><div class="field-group"><label>Slika terminala (URL)</label><input type="text" placeholder="https://..." class="t-img"/></div><button class="btn-remove-row" onclick="removeRow(this)">×</button>`;
   c.appendChild(d);
 }
 
@@ -609,8 +617,7 @@ async function saveConnector() {
   const connectorImages = [...document.querySelectorAll('.conn-img-url')].map(i => i.value.trim()).filter(Boolean);
   const terminals = [...document.querySelectorAll('.terminal-row')].map(r => ({
     name: r.querySelector('.t-name')?.value.trim() || '',
-    pin: r.querySelector('.t-pin')?.value.trim() || '',
-    color: r.querySelector('.t-color')?.value.trim() || ''
+    image: r.querySelector('.t-img')?.value.trim() || ''
   })).filter(t => t.name);
   const tools = [...document.querySelectorAll('.tool-row')].map(r => ({
     number: r.querySelector('.tool-num')?.value.trim() || '',
@@ -658,7 +665,7 @@ function renderConnectorList() {
 function resetAdminForm() {
   ['a-number','a-project','a-note','a-pdf-url','a-pdf-name'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('connector-img-rows').innerHTML = `<div style="margin-bottom:10px"><input type="text" placeholder="https://... (URL slike)" class="conn-img-url" /></div>`;
-  document.getElementById('terminal-rows').innerHTML = `<div class="terminal-row"><div class="field-group"><label>Oznaka</label><input type="text" placeholder="1-968853-1" class="t-name"/></div><div class="field-group"><label>Pin</label><input type="text" placeholder="A1" class="t-pin"/></div><div class="field-group"><label>Boja žice</label><input type="text" placeholder="CRV/BEL" class="t-color"/></div><button class="btn-remove-row" onclick="removeRow(this)">×</button></div>`;
+  document.getElementById('terminal-rows').innerHTML = `<div class="terminal-row"><div class="field-group"><label>Broj terminala</label><input type="text" placeholder="1-968853-1" class="t-name"/></div><div class="field-group"><label>Slika terminala (URL)</label><input type="text" placeholder="https://..." class="t-img"/></div><button class="btn-remove-row" onclick="removeRow(this)">×</button></div>`;
   document.getElementById('tool-rows').innerHTML = `<div class="tool-row"><div class="field-group"><label>Broj alata</label><input type="text" placeholder="2-1579007-1" class="tool-num"/></div><div class="field-group"><label>Slika alata (URL)</label><input type="text" placeholder="https://..." class="tool-img"/></div><button class="btn-remove-row" onclick="removeRow(this)" style="margin-top:20px">×</button></div>`;
 }
 
