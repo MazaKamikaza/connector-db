@@ -132,7 +132,7 @@
   .connector-img:hover { border-color: var(--accent); transform: scale(1.02); }
   .img-placeholder { width: 100%; height: 160px; border-radius: 6px; border: 1px dashed var(--border); background: var(--surface2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 12px; font-family: var(--mono); }
 
-  .terminals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .terminals-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
   .terminal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
   .terminal-card:hover { border-color: var(--accent2); }
   .terminal-img-wrap { width: 100%; height: 140px; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -154,8 +154,10 @@
   .pdf-name { font-family: var(--mono); font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
   .btn-download { background: none; border: 1px solid var(--border); color: var(--text-muted); font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; padding: 6px 14px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; text-decoration: none; display: inline-block; }
   .btn-download:hover { border-color: var(--text-dim); color: var(--text); }
-  .pdf-frame-container { position: relative; height: 500px; background: #525659; }
-  .pdf-frame-container iframe { width: 100%; height: 100%; border: none; }
+  .pdf-img-container { padding: 16px; background: var(--surface2); cursor: pointer; }
+  .pdf-img-container img { width: 100%; border-radius: 4px; display: block; transition: opacity 0.2s; }
+  .pdf-img-container:hover img { opacity: 0.85; }
+  .pdf-img-hint { text-align: center; font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-top: 10px; letter-spacing: 0.06em; }
   .pdf-placeholder { height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-muted); font-family: var(--mono); font-size: 13px; }
 
   .no-result { text-align: center; padding: 60px 20px; color: var(--text-muted); font-family: var(--mono); font-size: 14px; display: none; }
@@ -570,8 +572,9 @@ function renderResults(c) {
           </div>
           <a class="btn-download" href="${c.pdfUrl}" target="_blank">↓ Preuzmi / Otvori</a>
         </div>
-        <div class="pdf-frame-container">
-          <iframe src="${c.pdfUrl}" title="PDF Preview"></iframe>
+        <div class="pdf-img-container" onclick="openLightbox('${c.pdfUrl}')">
+          <img src="${c.pdfUrl}" alt="${c.pdfName || 'Standard'}">
+          <div class="pdf-img-hint">↗ Klikni za uvećan prikaz</div>
         </div>
       </div>`;
   } else {
