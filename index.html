@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="sr">
 <head>
@@ -203,7 +204,18 @@
   .lightbox.open { display: flex; }
   .lightbox img { max-width: 90vw; max-height: 88vh; object-fit: contain; border-radius: 4px; }
 
-  ::-webkit-scrollbar { width: 6px; }
+  .connector-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 8px; }
+  .connector-grid-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
+  .connector-grid-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .connector-grid-img { width: 100%; height: 130px; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .connector-grid-img img { width: 100%; height: 100%; object-fit: cover; }
+  .connector-grid-info { padding: 10px 12px; }
+  .connector-grid-number { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 2px; }
+  .connector-grid-project { font-size: 11px; color: var(--text-muted); }
+  .project-header { font-family: var(--mono); font-size: 13px; color: var(--text-muted); margin-bottom: 16px; letter-spacing: 0.06em; }
+  #project-results { display: none; margin-bottom: 40px; }
+  .btn-back { background: none; border: 1px solid var(--border); color: var(--text-muted); font-family: var(--mono); font-size: 11px; padding: 7px 16px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; margin-bottom: 24px; display: inline-block; }
+  .btn-back:hover { border-color: var(--accent); color: var(--accent); }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
@@ -271,7 +283,15 @@
       <div style="font-size:32px;margin-bottom:8px;opacity:0.3">◎</div>
       Nema rezultata za traženu kombinaciju.
     </div>
+
+    <!-- PROJECT LIST -->
+    <div id="project-results">
+      <div class="project-header" id="project-header"></div>
+      <div class="connector-grid" id="connector-grid"></div>
+    </div>
+
     <div id="results">
+      <button class="btn-back" id="btn-back" onclick="goBack()" style="display:none">← Nazad na projekat</button>
       <div class="result-header">
         <span class="result-tag" id="result-project-tag"></span>
         <span class="result-title" id="result-connector-title"></span>
@@ -488,16 +508,69 @@ function populateProjectDropdown() {
   });
 }
 
+function hideAllResults() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('project-results').style.display = 'none';
+  document.getElementById('no-result').style.display = 'none';
+}
+
 function doSearch() {
   const num = document.getElementById('input-connector-number').value.trim().toUpperCase();
   const proj = document.getElementById('input-project').value;
-  if (!num) { showToast('Unesite broj konektora.', true); return; }
-  let results = DB.filter(c => c.number.toUpperCase() === num);
-  if (proj) results = results.filter(c => c.project === proj);
-  document.getElementById('results').style.display = 'none';
-  document.getElementById('no-result').style.display = 'none';
+  hideAllResults();
+
+  // Samo projekat — izlistaj sve konektore tog projekta
+  if (!num && proj) {
+    const connectors = DB.filter(c => c.project === proj);
+    if (connectors.length === 0) { document.getElementById('no-result').style.display = 'block'; return; }
+    renderProjectGrid(proj, connectors);
+    return;
+  }
+
+  // Ni broj ni projekat
+  if (!num && !proj) { showToast('Unesite broj konektora ili izaberite projekat.', true); return; }
+
+  // Samo broj bez projekta
+  if (num && !proj) { showToast('Izaberite i projekat za tačan rezultat.', true); return; }
+
+  // Broj + Projekat
+  let results = DB.filter(c => c.number.toUpperCase() === num && c.project === proj);
   if (results.length === 0) { document.getElementById('no-result').style.display = 'block'; return; }
   renderResults(results[0]);
+}
+
+function renderProjectGrid(proj, connectors) {
+  document.getElementById('project-header').textContent = `Projekat: ${proj} — ${connectors.length} konektora`;
+  const grid = document.getElementById('connector-grid');
+  grid.innerHTML = connectors.map(c => `
+    <div class="connector-grid-card" onclick="showConnectorDetail(${c.id})">
+      <div class="connector-grid-img">
+        ${c.connectorImages && c.connectorImages[0] ? `<img src="${c.connectorImages[0]}" alt="${c.number}">` : `<svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#3a3f52"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>`}
+      </div>
+      <div class="connector-grid-info">
+        <div class="connector-grid-number">${c.number}</div>
+        <div class="connector-grid-project">${c.note || '—'}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('project-results').style.display = 'block';
+}
+
+function showConnectorDetail(id) {
+  const connector = DB.find(c => c.id === id);
+  if (!connector) return;
+  document.getElementById('project-results').style.display = 'none';
+  document.getElementById('btn-back').style.display = 'inline-block';
+  renderResults(connector);
+}
+
+function goBack() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('btn-back').style.display = 'none';
+  const proj = document.getElementById('input-project').value;
+  if (proj) {
+    const connectors = DB.filter(c => c.project === proj);
+    renderProjectGrid(proj, connectors);
+  }
 }
 
 function renderResults(c) {
